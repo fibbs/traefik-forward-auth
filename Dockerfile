@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine as builder
+FROM golang:1.16-alpine as builder
 
 # Setup
 RUN mkdir -p /go/src/github.com/thomseddon/traefik-forward-auth
@@ -9,7 +9,13 @@ RUN apk add --no-cache git
 
 # Copy & build
 ADD . /go/src/github.com/thomseddon/traefik-forward-auth/
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -installsuffix nocgo -o /traefik-forward-auth github.com/thomseddon/traefik-forward-auth/cmd
+#RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -installsuffix nocgo -o /traefik-forward-auth github.com/thomseddon/traefik-forward-auth/cmd
+RUN \
+  apkArch="$(apk --print-arch)"; \
+  case "$apkArch" in \
+    aarch64) CGO_ENABLED=0 GOOS=linux GOARCH=arm GO111MODULE=on go build -a -installsuffix nocgo -o /traefik-forward-auth github.com/thomseddon/traefik-forward-auth/cmd;; \
+    x86_64) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -installsuffix nocgo -o /traefik-forward-auth github.com/thomseddon/traefik-forward-auth/cmd ;; \
+  esac;
 
 # Copy into scratch container
 FROM scratch
